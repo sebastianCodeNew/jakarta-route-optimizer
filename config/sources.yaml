@@ -1,0 +1,22 @@
+sources:
+  transjakarta_gtfs:
+    url: "https://gtfs.transjakarta.co.id/files/file_gtfs.zip"
+    license: "CC BY 4.0"
+    format: "gtfs_zip"
+    description: "Official TransJakarta General Transit Feed Specification"
+  worldpop_constrained:
+    url: "https://data.worldpop.org/GIS/Population/Global_2000_2020_Constrained/2020/BSGM/IDN/idn_ppp_2020_constrained.tif"
+    license: "CC BY 4.0"
+    format: "geotiff"
+    description: "WorldPop 100m Constrained Individual Countries (IDN 2020)"
+  geofabrik_osm_java:
+    url: "https://download.geofabrik.de/asia/indonesia/java-latest.osm.pbf"
+    license: "ODbL 1.0"
+    format: "osm_pbf"
+    description: "Geofabrik OpenStreetMap extract for Java"
+  tomtom_flow:
+    url: "https://api.tomtom.com/traffic/services/4/flowSegmentData/relative0/10/json"
+    license: "TomTom API Freemium Evaluation License"
+    format: "json"
+    daily_quota: 2500
+    description: "TomTom Real-Time Traffic Flow Segment API"

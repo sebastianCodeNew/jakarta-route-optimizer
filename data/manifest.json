@@ -1,0 +1,28 @@
+{
+  "version": "1.0",
+  "last_updated": "2026-10-10T09:55:32.897154+00:00",
+  "entries": [
+    {
+      "key": "raw_rail_gtfs",
+      "file_path": "/home/sebastian/projects/jakarta-route-optimizer/data/raw/gtfs_rail/gtfs_rail.zip",
+      "sha256": "82617d03316b4a55ff19be516b84ec416bbf79306e2d55cb390d6b03a75fe32c",
+      "size_bytes": 4830,
+      "source_url": null,
+      "license": "Synthetic ODbL/KAI",
+      "updated_at": "2026-10-10T09:55:28.278100+00:00",
+      "metadata": {}
+    },
+    {
+      "key": "raw_transjakarta_gtfs",
+      "file_path": "/home/sebastian/projects/jakarta-route-optimizer/data/raw/gtfs_tj/transjakarta_gtfs.zip",
+      "sha256": "63b4fb14d9afa7fd21737fee57991366b3f61746af12479725cc17d0cf64fb22",
+      "size_bytes": 2497332,
+      "source_url": "https://gtfs.transjakarta.co.id/files/file_gtfs.zip",
+      "license": "CC BY 4.0",
+      "updated_at": "2026-10-10T09:55:32.897086+00:00",
+      "metadata": {
+        "ingested_at": "2026-10-10T09:55:32.894617+00:00"
+      }
+    }
+  ]
+}

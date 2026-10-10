@@ -1,0 +1,26 @@
+emission_factors:
+  motorcycle:
+    co2: 45.0
+    pm25: 0.052
+    nox: 0.160
+    co: 1.850
+  car:
+    co2: 175.0
+    pm25: 0.018
+    nox: 0.220
+    co: 0.880
+  mikrotrans:
+    co2: 160.0
+    pm25: 0.025
+    nox: 0.350
+    co: 0.550
+  bus_medium_large:
+    co2: 850.0
+    pm25: 0.120
+    nox: 3.500
+    co: 1.250
+metadata:
+  sources:
+    - "KLHK (Kementerian Lingkungan Hidup dan Kehutanan) - Pedoman Inventarisasi Emisi Sektor Transportasi Darat"
+    - "ITDP Indonesia - TransJakarta Electrification & Emissions Study"
+  units: "g / vehicle-km"

@@ -1,0 +1,72 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "jro"
+version = "0.1.0"
+description = "Jakarta Route Optimizer (JRO) - Data-driven public transit route optimization for Jabodetabek"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "folium>=0.20.0",
+    "geopandas>=1.2.0",
+    "h3>=4.5.0",
+    "jinja2>=3.1.6",
+    "matplotlib>=3.11.2",
+    "networkx>=3.7",
+    "numpy>=2.5.3",
+    "pandas>=3.0.6",
+    "pyarrow>=26.0.0",
+    "pydantic>=2.14.0",
+    "pyproj>=3.8.0",
+    "pyyaml>=6.0.3",
+    "r5py>=1.1.7",
+    "requests>=2.34.2",
+    "rich>=15.0.0",
+    "scipy>=1.18.1",
+    "shapely>=2.2.0",
+    "typer>=0.27.3",
+    "urllib3>=2.8.0",
+]
+
+[project.scripts]
+jro = "jro.cli:app"
+
+[dependency-groups]
+dev = [
+    "hatchling>=1.32.4",
+    "mypy>=2.4.0",
+    "pytest>=9.1.1",
+    "pytest-mock>=3.16.0",
+    "ruff>=0.17.0",
+    "types-pyyaml>=6.0.12.20260906",
+    "types-requests>=2.33.0.20261006",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/jro"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+ignore_missing_imports = true
+warn_return_any = false
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = false
+disallow_untyped_calls = false
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true

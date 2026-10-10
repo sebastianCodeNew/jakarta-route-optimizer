@@ -1,0 +1,14 @@
+weights:
+  vkt_reduction: 0.30
+  emission_reduction: 0.25
+  ridership: 0.20
+  accessibility_gain: 0.15
+  equity_transit_desert: 0.10
+
+constraints:
+  max_overlap_ratio: 0.40
+  min_stop_spacing_meters: 300.0
+  max_stop_spacing_meters: 800.0
+  min_stops: 8
+  max_stops: 50
+  require_transit_anchor: true

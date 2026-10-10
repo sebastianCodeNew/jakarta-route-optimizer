@@ -1,0 +1,32 @@
+vehicle_profiles:
+  mikrotrans:
+    name: "mikrotrans"
+    display_name: "Mikrotrans (JakLingko Minibus)"
+    capacity: 11
+    dwell_seconds: 15.0
+    layover_minutes: 5.0
+    allowed_highway:
+      - "residential"
+      - "unclassified"
+      - "tertiary"
+      - "secondary"
+      - "primary"
+    min_length_km: 5.0
+    max_length_km: 22.0
+    operating_cost_per_km_idr: 6500.0
+    emission_factor_key: "mikrotrans"
+  non_brt:
+    name: "non_brt"
+    display_name: "TransJakarta Non-BRT (Metrotrans/Minitrans)"
+    capacity: 60
+    dwell_seconds: 30.0
+    layover_minutes: 8.0
+    allowed_highway:
+      - "tertiary"
+      - "secondary"
+      - "primary"
+      - "trunk"
+    min_length_km: 5.0
+    max_length_km: 35.0
+    operating_cost_per_km_idr: 14000.0
+    emission_factor_key: "bus_medium_large"

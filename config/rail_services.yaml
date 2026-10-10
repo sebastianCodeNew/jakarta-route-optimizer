@@ -1,0 +1,82 @@
+rail_services:
+  krl_bogor:
+    name: "Commuter Line Bogor"
+    agency: "KAI Commuter"
+    route_type: 2
+    headway_minutes:
+      peak: 5.0
+      off_peak: 10.0
+      evening_peak: 5.0
+    commercial_speed_kmh: 40.0
+  krl_cikarang:
+    name: "Commuter Line Cikarang"
+    agency: "KAI Commuter"
+    route_type: 2
+    headway_minutes:
+      peak: 7.0
+      off_peak: 15.0
+      evening_peak: 7.0
+    commercial_speed_kmh: 42.0
+  krl_rangkasbitung:
+    name: "Commuter Line Rangkasbitung"
+    agency: "KAI Commuter"
+    route_type: 2
+    headway_minutes:
+      peak: 8.0
+      off_peak: 15.0
+      evening_peak: 8.0
+    commercial_speed_kmh: 45.0
+  krl_tangerang:
+    name: "Commuter Line Tangerang"
+    agency: "KAI Commuter"
+    route_type: 2
+    headway_minutes:
+      peak: 10.0
+      off_peak: 15.0
+      evening_peak: 10.0
+    commercial_speed_kmh: 38.0
+  krl_tanjung_priok:
+    name: "Commuter Line Tanjung Priok"
+    agency: "KAI Commuter"
+    route_type: 2
+    headway_minutes:
+      peak: 20.0
+      off_peak: 30.0
+      evening_peak: 20.0
+    commercial_speed_kmh: 35.0
+  mrt_jakarta:
+    name: "MRT Jakarta North-South Line"
+    agency: "PT MRT Jakarta"
+    route_type: 1
+    headway_minutes:
+      peak: 5.0
+      off_peak: 10.0
+      evening_peak: 5.0
+    commercial_speed_kmh: 45.0
+  lrt_jakarta:
+    name: "LRT Jakarta Line 1"
+    agency: "PT LRT Jakarta"
+    route_type: 0
+    headway_minutes:
+      peak: 10.0
+      off_peak: 10.0
+      evening_peak: 10.0
+    commercial_speed_kmh: 35.0
+  lrt_jabodebek_cibubur:
+    name: "LRT Jabodebek Cibubur Line"
+    agency: "KAI Divisi LRT Jabodebek"
+    route_type: 0
+    headway_minutes:
+      peak: 6.0
+      off_peak: 12.0
+      evening_peak: 6.0
+    commercial_speed_kmh: 45.0
+  lrt_jabodebek_bekasi:
+    name: "LRT Jabodebek Bekasi Line"
+    agency: "KAI Divisi LRT Jabodebek"
+    route_type: 0
+    headway_minutes:
+      peak: 6.0
+      off_peak: 12.0
+      evening_peak: 6.0
+    commercial_speed_kmh: 45.0

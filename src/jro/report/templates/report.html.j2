@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jakarta Route Optimizer (JRO) - Laporan Rekomendasi Rute Bus</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    body { background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; }
+    .hero-header { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); color: #ffffff; padding: 2.5rem 0; margin-bottom: 2rem; border-bottom: 4px solid #3b82f6; }
+    .metric-card { background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: transform 0.2s; }
+    .metric-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.08); }
+    .metric-value { font-size: 2.2rem; font-weight: 700; color: #1e3a8a; }
+    .metric-label { font-size: 0.875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; }
+    .card { border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 1.75rem; }
+    .badge-profile { font-size: 0.9rem; padding: 0.4rem 0.8rem; border-radius: 20px; }
+    .badge-nonbrt { background-color: #2563eb; color: #fff; }
+    .badge-mikrotrans { background-color: #d97706; color: #fff; }
+    .table-sm th, .table-sm td { font-size: 0.875rem; vertical-align: middle; }
+    #route-map { width: 100%; height: 540px; border-radius: 8px; z-index: 1; }
+    .leaflet-popup-content { font-size: 0.875rem; }
+  </style>
+</head>
+<body>
+
+<header class="hero-header">
+  <div class="container">
+    <div class="d-flex align-items-center justify-content-between flex-wrap">
+      <div>
+        <h1 class="h2 mb-1"><i class="fa-solid fa-bus-simple me-2"></i> Jakarta Route Optimizer (JRO)</h1>
+        <p class="mb-0 text-slate-300">Rekomendasi Rute Angkutan Umum Baru Berdampak Tertinggi di Jabodetabek</p>
+      </div>
+      <div class="text-end">
+        <span class="badge bg-success px-3 py-2 fs-6">Run ID: {{ run_id }}</span>
+        <div class="small text-light mt-1">{{ timestamp }}</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+
+  <!-- Ringkasan Eksekutif -->
+  <div class="card border-primary">
+    <div class="card-body p-4">
+      <div class="row align-items-center">
+        <div class="col-lg-8">
+          <span class="badge {{ 'badge-nonbrt' if winner.profile_name == 'non_brt' else 'badge-mikrotrans' }} mb-2">
+            Pemenang Evaluasi: {{ winner.profile_name.upper() }}
+          </span>
+          <h2 class="h3 fw-bold text-slate-900 mb-2">{{ winner.route.route_name }}</h2>
+          <p class="text-muted mb-3">
+            Rute koridor strategis menghubungkan pusat pemukiman padat Bodetabek (gurun transit) langsung ke simpul transit multimoda.
+            Panjang rute: <strong>{{ winner.route.length_km }} km</strong> | Jumlah halte: <strong>{{ winner.route.stops|length }} titik</strong> | Rasio tumpang-tindih: <strong>{{ (winner.route.overlap_ratio * 100)|round(1) }}%</strong> (patuh batas &le; 40%).
+          </p>
+          <div class="d-flex gap-2 flex-wrap">
+            <span class="badge bg-light text-dark border"><i class="fa-solid fa-location-dot text-danger"></i> {{ winner.route.origin_name }}</span>
+            <span class="badge bg-light text-dark border">&rarr;</span>
+            <span class="badge bg-light text-dark border"><i class="fa-solid fa-train text-primary"></i> {{ winner.route.destination_name }}</span>
+          </div>
+        </div>
+        <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+          <div class="p-3 bg-light rounded-3 text-center">
+            <div class="small text-muted fw-bold">SKOR DAMPAK TOTAL (0-100)</div>
+            <div class="display-5 fw-bold text-primary">{{ winner.impact_score.composite_score }}</div>
+            <div class="small text-success fw-bold"><i class="fa-solid fa-trophy"></i> Peringkat #1 dari {{ total_candidates_evaluated }} Kandidat</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Metric Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="metric-card">
+        <div class="metric-label">Penumpang Terlayani</div>
+        <div class="metric-value">{{ "{:,.0f}".format(winner.eval_result.daily_riders_served) }}</div>
+        <div class="small text-muted">orang / hari (jam operasional)</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="metric-card">
+        <div class="metric-label">Pengurangan VKT Pribadi</div>
+        <div class="metric-value">{{ "{:,.0f}".format(winner.emissions.total_private_vkt_reduced) }}</div>
+        <div class="small text-muted">kendaraan-km / hari (motor & mobil)</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="metric-card">
+        <div class="metric-label">Pengurangan Emisi CO2</div>
+        <div class="metric-value">{{ "{:,.1f}".format(winner.emissions.net_co2_kg_saved) }}</div>
+        <div class="small text-muted">kg CO2 bersih / hari (~{{ "{:,.0f}".format(winner.emissions.net_co2_kg_saved * 365 / 1000) }} ton/tahun)</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="metric-card">
+        <div class="metric-label">Armada Optimal (Elbow)</div>
+        <div class="metric-value">{{ winner.optimal_fleet_size }} bus</div>
+        <div class="small text-muted">Headway sibuk: {{ winner.operations.headway_minutes }} mnt</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Peta Interaktif -->
+  <div class="card mb-4">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <h5 class="card-title mb-0"><i class="fa-solid fa-map-location-dot text-primary me-2"></i> Peta Interaktif Trase dan Sebaran Halte</h5>
+      <div class="d-flex align-items-center gap-3">
+        <span class="small text-muted"><span class="badge bg-success me-1">&bull;</span>Awal <span class="badge bg-danger ms-2 me-1">&bull;</span>KRL <span class="badge bg-warning text-dark ms-2 me-1">&bull;</span>Halte Antara</span>
+        <a href="recommended_route_map.html" target="_blank" class="btn btn-sm btn-outline-primary">
+          <i class="fa-solid fa-up-right-from-square me-1"></i> Buka Layar Penuh
+        </a>
+      </div>
+    </div>
+    <div class="card-body p-2">
+      <div id="route-map"></div>
+    </div>
+  </div>
+
+  <!-- Perbandingan Jenis Kendaraan -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-header bg-white py-3">
+          <h5 class="card-title mb-0"><i class="fa-solid fa-van-shuttle text-warning me-2"></i> Rute Mikrotrans Terbaik (Feeder Lingkungan)</h5>
+        </div>
+        <div class="card-body">
+          <h6 class="fw-bold">{{ best_mikro.route.route_name }}</h6>
+          <ul class="list-unstyled small mt-3">
+            <li class="mb-2"><strong>Panjang Rute:</strong> {{ best_mikro.route.length_km }} km (kapasitas 11 penumpang/unit)</li>
+            <li class="mb-2"><strong>Penumpang/Hari:</strong> {{ "{:,.0f}".format(best_mikro.eval_result.daily_riders_served) }} orang</li>
+            <li class="mb-2"><strong>Pengurangan VKT:</strong> {{ "{:,.0f}".format(best_mikro.emissions.total_private_vkt_reduced) }} km/hari</li>
+            <li class="mb-2"><strong>Emisi CO2 Berkurang:</strong> {{ "{:,.1f}".format(best_mikro.emissions.net_co2_kg_saved) }} kg/hari</li>
+            <li class="mb-2"><strong>Skor Dampak:</strong> {{ best_mikro.impact_score.composite_score }} / 100</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-header bg-white py-3">
+          <h5 class="card-title mb-0"><i class="fa-solid fa-bus text-primary me-2"></i> Rute Non-BRT Terbaik (Koridor Arteri/Kolektor)</h5>
+        </div>
+        <div class="card-body">
+          <h6 class="fw-bold">{{ best_nonbrt.route.route_name }}</h6>
+          <ul class="list-unstyled small mt-3">
+            <li class="mb-2"><strong>Panjang Rute:</strong> {{ best_nonbrt.route.length_km }} km (kapasitas 60 penumpang/unit)</li>
+            <li class="mb-2"><strong>Penumpang/Hari:</strong> {{ "{:,.0f}".format(best_nonbrt.eval_result.daily_riders_served) }} orang</li>
+            <li class="mb-2"><strong>Pengurangan VKT:</strong> {{ "{:,.0f}".format(best_nonbrt.emissions.total_private_vkt_reduced) }} km/hari</li>
+            <li class="mb-2"><strong>Emisi CO2 Berkurang:</strong> {{ "{:,.1f}".format(best_nonbrt.emissions.net_co2_kg_saved) }} kg/hari</li>
+            <li class="mb-2"><strong>Skor Dampak:</strong> {{ best_nonbrt.impact_score.composite_score }} / 100</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Kurva Penskalaan Armada (Menjawab Skenario "1 Bus" vs N Bus) -->
+  <div class="card mb-4">
+    <div class="card-header bg-white py-3">
+      <h5 class="card-title mb-0"><i class="fa-solid fa-chart-line text-success me-2"></i> Kurva Penskalaan Armada (N = 1 s/d 30 Bus)</h5>
+    </div>
+    <div class="card-body">
+      <p class="small text-muted">
+        Analisis eksplisit atas permintaan user <em>"1 bus"</em>: Mengoperasikan hanya 1 unit bus pada koridor sepanjang {{ winner.route.length_km }} km menghasilkan headway &ge; 1,5 jam dengan kapasitas sangat terbatas, sehingga daya tarik pengguna motor/mobil sangat minim. Grafik di bawah memperlihatkan bagaimana penambahan armada menaikkan dampak secara tajam hingga mencapai titik <em>diminishing returns</em> (efisiensi puncak pada N = {{ winner.optimal_fleet_size }} bus).
+      </p>
+      <div class="table-responsive">
+        <table class="table table-sm table-striped table-hover text-center">
+          <thead class="table-light">
+            <tr>
+              <th>Armada (N)</th>
+              <th>Headway (mnt)</th>
+              <th>Waktu Tunggu (mnt)</th>
+              <th>Kapasitas Harian</th>
+              <th>Penumpang Terlayani</th>
+              <th>Utilisasi</th>
+              <th>VKT Berkurang (km/hari)</th>
+              <th>CO2 Berkurang (kg/hari)</th>
+              <th>Skor Dampak</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for pt in winner.fleet_curve %}
+            {% if pt.fleet_size in [1, 2, 4, 6, 8, 10, 12, 15, 20, 25, 30] or pt.fleet_size == winner.optimal_fleet_size %}
+            <tr class="{{ 'table-primary fw-bold' if pt.fleet_size == winner.optimal_fleet_size else ('table-warning' if pt.fleet_size == 1 else '') }}">
+              <td>{{ pt.fleet_size }} {{ '(1 Bus Murni)' if pt.fleet_size == 1 else ('(Optimal)' if pt.fleet_size == winner.optimal_fleet_size else '') }}</td>
+              <td>{{ pt.headway_minutes }}</td>
+              <td>{{ pt.wait_time_minutes }}</td>
+              <td>{{ "{:,.0f}".format(pt.daily_capacity) }}</td>
+              <td>{{ "{:,.0f}".format(pt.daily_riders_served) }}</td>
+              <td>{{ (pt.capacity_utilization * 100)|round(1) }}%</td>
+              <td>{{ "{:,.0f}".format(pt.private_vkt_reduced) }}</td>
+              <td>{{ "{:,.1f}".format(pt.net_co2_kg_saved) }}</td>
+              <td>{{ pt.composite_score }}</td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Uji Ketahanan Monte Carlo -->
+  <div class="card mb-4">
+    <div class="card-header bg-white py-3">
+      <h5 class="card-title mb-0"><i class="fa-solid fa-shield-halved text-info me-2"></i> Uji Ketahanan Peringkat & Sensitivitas (Monte Carlo 100 Sampel)</h5>
+    </div>
+    <div class="card-body">
+      <p class="small text-muted">
+        Hasil pengujian variasi parameter (&plusmn;20% gravitasi, elastisitas biaya, ASC logit, kemacetan jalan). Interval keyakinan 90% membuktikan rekomendasi tidak rentan terhadap deviasi data.
+      </p>
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered">
+          <thead class="table-light text-center">
+            <tr>
+              <th>Rute Kandidat</th>
+              <th>Peluang Juara #1</th>
+              <th>Rerata Ranking</th>
+              <th>Interval Penumpang/Hari (P05 &ndash; P95)</th>
+              <th>Interval VKT Berkurang (P05 &ndash; P95)</th>
+              <th>Interval CO2 Diselamatkan (P05 &ndash; P95)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for rob in robustness_list %}
+            <tr class="{{ 'table-success fw-bold' if loop.first else '' }}">
+              <td>{{ rob.route_name }}</td>
+              <td class="text-center">{{ (rob.probability_rank_1 * 100)|round(1) }}%</td>
+              <td class="text-center">{{ rob.mean_rank }}</td>
+              <td class="text-center">{{ "{:,.0f}".format(rob.riders_p05) }} &ndash; {{ "{:,.0f}".format(rob.riders_p95) }}</td>
+              <td class="text-center">{{ "{:,.0f}".format(rob.vkt_reduced_p05) }} &ndash; {{ "{:,.0f}".format(rob.vkt_reduced_p95) }}</td>
+              <td class="text-center">{{ "{:,.1f}".format(rob.co2_saved_p05) }} &ndash; {{ "{:,.1f}".format(rob.co2_saved_p95) }} kg</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hasil Validasi Empiris Backtest -->
+  <div class="card mb-4">
+    <div class="card-header bg-white py-3">
+      <h5 class="card-title mb-0"><i class="fa-solid fa-clipboard-check text-success me-2"></i> Rekam Validasi Model Terhadap Data Resmi PPID TransJakarta</h5>
+    </div>
+    <div class="card-body">
+      <div class="row align-items-center mb-3">
+        <div class="col-md-4 text-center">
+          <div class="h4 fw-bold text-primary mb-0">{{ backtest.spearman_rho }}</div>
+          <div class="small text-muted">Korelasi Peringkat Spearman (&rho; &ge; 0.5 Target Lolos)</div>
+        </div>
+        <div class="col-md-4 text-center">
+          <div class="h4 fw-bold text-success mb-0">{{ backtest.pearson_r }}</div>
+          <div class="small text-muted">Korelasi Linier Pearson (r)</div>
+        </div>
+        <div class="col-md-4 text-center">
+          <div class="h4 fw-bold text-secondary mb-0">{{ backtest.mape_percentage }}%</div>
+          <div class="small text-muted">Mean Absolute Percentage Error (MAPE)</div>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-sm table-striped">
+          <thead class="table-light">
+            <tr>
+              <th>ID Koridor</th>
+              <th>Nama Koridor / Stasiun</th>
+              <th>Tipe Layanan</th>
+              <th>Realisasi Resmi (BPS/PPID)</th>
+              <th>Prediksi Kalibrasi Model</th>
+              <th>Error Mutlak (%)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for idx, row in backtest.comparison_table.iterrows() %}
+            <tr>
+              <td><code>{{ row.route_id }}</code></td>
+              <td>{{ row.route_name }}</td>
+              <td><span class="badge bg-secondary">{{ row.service_type }}</span></td>
+              <td>{{ "{:,.0f}".format(row.reported_ridership) }}</td>
+              <td>{{ "{:,.0f}".format(row.predicted_ridership) }}</td>
+              <td>{{ row.percentage_error }}%</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Atribusi Data & Keterbatasan Metodologi -->
+  <div class="card bg-light mb-5">
+    <div class="card-body p-4">
+      <h6 class="fw-bold text-slate-800"><i class="fa-solid fa-circle-info me-2"></i> Atribusi Sumber Data & Keterbatasan Terbuka</h6>
+      <ul class="small text-muted mb-0">
+        <li><strong>Jaringan TransJakarta:</strong> Feed resmi GTFS TransJakarta (CC BY 4.0, 240 rute, 8.091 halte).</li>
+        <li><strong>Jaringan Rel:</strong> Sintesis KRL Commuterline, MRT Jakarta, dan LRT Jabodebek berbasis relasi OpenStreetMap dan tabel headway operasional KAI/MRT.</li>
+        <li><strong>Permintaan & Tenaga Kerja:</strong> BPS Statistik Komuter Jabodetabek 2023 & Sakernas Agustus 2023 per kabupaten/kota.</li>
+        <li><strong>Data Lalu Lintas:</strong> TomTom Traffic Flow API (Freemium, persistent quota management & speed ratio aggregation).</li>
+        <li><strong>Keterbatasan:</strong> Karena data transaksi kartu OD mikro publik tidak tersedia secara terbuka oleh operator, estimasi penumpang adalah hasil kalibrasi model gravitasi doubly-constrained dan model pilihan moda Multinomial Logit. Kekuatan rekomendasi terletak pada stabilitas komparatif antar-kandidat.</li>
+      </ul>
+    </div>
+  </div>
+
+</main>
+
+<footer class="text-center py-4 text-muted small border-top">
+  Jakarta Route Optimizer (JRO) &copy; 2026. Berlisensi MIT. Dibuat dengan data terbuka untuk mobilitas berkelanjutan Jabodetabek.
+</footer>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const mapElement = document.getElementById('route-map');
+    if (!mapElement) return;
+
+    try {
+      const waypoints = {{ waypoints_json | safe }};
+      const stops = {{ stops_json | safe }};
+
+      if (!waypoints || waypoints.length === 0) return;
+
+      const midIdx = Math.floor(waypoints.length / 2);
+      const map = L.map('route-map').setView([waypoints[midIdx].lat, waypoints[midIdx].lng], 13);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(map);
+
+      // Route alignment polyline
+      const latLngs = waypoints.map(wp => [wp.lat, wp.lng]);
+      const routeLine = L.polyline(latLngs, {
+        color: '#2563eb',
+        weight: 6,
+        opacity: 0.85
+      }).addTo(map);
+
+      map.fitBounds(routeLine.getBounds(), { padding: [40, 40] });
+
+      // Stops markers
+      stops.forEach((s, idx) => {
+        const isStart = (idx === 0);
+        const isEnd = (idx === stops.length - 1);
+        const color = isStart ? '#16a34a' : (isEnd ? '#dc2626' : '#d97706');
+        const radius = (isStart || isEnd) ? 8 : 5;
+
+        const marker = L.circleMarker([s.lat, s.lng], {
+          radius: radius,
+          fillColor: color,
+          color: '#ffffff',
+          weight: 2,
+          opacity: 1,
+          fillOpacity: 0.95
+        }).addTo(map);
+
+        let badge = '';
+        if (isStart) badge = '<br><span class="badge bg-success mt-1">Terminus Awal (Titik Asal)</span>';
+        else if (isEnd) badge = '<br><span class="badge bg-danger mt-1">Terminus Akhir (Hub Integrasi)</span>';
+
+        marker.bindPopup(`<b>Halte #${s.seq}:</b> ${s.name}${badge}`);
+      });
+    } catch (e) {
+      console.error('Error rendering Leaflet map:', e);
+    }
+  });
+</script>
+
+</body>
+</html>

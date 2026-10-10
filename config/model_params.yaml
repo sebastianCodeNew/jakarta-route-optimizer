@@ -1,0 +1,31 @@
+gravity:
+  beta: 0.035
+  max_travel_time_minutes: 120.0
+  min_flow_threshold: 0.1
+
+mode_choice:
+  asc_motorcycle: 1.20
+  asc_car: 0.45
+  asc_transit: 0.0
+  beta_ivt: -0.040
+  beta_walk: -0.080
+  beta_wait: -0.065
+  beta_xfer: -0.30
+  beta_cost: -0.00005
+  walk_speed_kmh: 4.5
+  max_walk_distance_km: 1.2
+  max_wait_minutes: 20.0
+
+costs:
+  fare_mikrotrans_idr: 0.0
+  fare_non_brt_idr: 3500.0
+  fare_krl_base_idr: 3000.0
+  fare_krl_rate_per_km_idr: 100.0
+  motorcycle_cost_per_km_idr: 350.0
+  car_cost_per_km_idr: 1400.0
+  motorcycle_parking_idr: 3000.0
+  car_parking_idr: 12000.0
+
+occupancy:
+  motorcycle: 1.15
+  car: 1.45

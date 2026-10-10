@@ -1,0 +1,20 @@
+study_area:
+  min_lon: 106.35
+  min_lat: -6.75
+  max_lon: 107.25
+  max_lat: -5.95
+
+h3_resolution: 8
+peak_window:
+  - "06:00"
+  - "09:00"
+off_peak_window:
+  - "10:00"
+  - "15:00"
+evening_peak_window:
+  - "17:00"
+  - "20:00"
+
+data_dir: "data"
+seed: 42
+max_cpu_workers: 4
